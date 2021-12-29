@@ -1,66 +1,54 @@
+NUMBER_OF_ACTIONS = 4
+ACTION = ['left', 'down', 'right', 'up']
+
+
 class Tree:
-  def __init__(self, root_value = None, observation = True, depth=0):
-    self.root = root_value
-    self.observation_node = observation # racine = observation qui peut engendrer plusieurs actions
-    self.children = [] 
-    self.depth = depth
-  
-  def getRoot(self):
-    return self.root
-  
-  def getDepth(self):
-    return self.depth
-  
-  def getChildren(self):
-    return self.children
-  
-  def getObservationStateStatus(self):
-    return self.observation_node
-  
-  def insert(self, node):
-    if self.root:
-      if self.observation_node :
-        observation = False
-        self.children.append(Tree(node, observation, self.depth+1))
-      else :
-        self.children.append(Tree(node, self.depth+1))
-    else:
-      self.root = node
-  
-  def printTree(self, root):
-    if (root.getRoot() == None):
-      print("empty root")
-      return None
-    q = [] 
-    q.append(root)
-    while (len(q) != 0):
-      n = len(q)
-      while (n > 0):
-        p = q[0]
-        q.pop(0);
-        print(p.root, end=" ")
-        for i in range(len(p.children)):
-          q.append(p.children[i]);
-        n -= 1
-      print()
-      
+
+    def __init__(self, n_init=0, v_init=0, depth=0, decision_state=False):
+        self.state_counter = n_init
+        self.state_value = v_init     # state value
+        self.depth = depth
+
+        if decision_state:
+            self.actions = []      # state's actions
+            self.actions_counter = []   # actions counter
+            self.belief_state = None    # state's belief state
+            self.insert()
+        else:
+            self.observations = []      # state's observations
+            self.leading_state = []     # observation leads you to next_state
+
+    def getDepth(self):
+        return self.depth
+
+    def getChildren(self):
+        return self.actions
+
+    def insert_observation(self, observation):
+        self.observations.append(observation)
+        self.leading_state.append(Tree(depth=self.depth + 1, decision_state=True))
+
+    def insert(self):
+        for action in range(NUMBER_OF_ACTIONS):
+            self.actions.append(Tree(depth=self.depth + 1))
+
+    def printTree(self):
+        print("S0")
+        for i in range(len(t.getChildren())):
+            print("a" + str(i), end=" ")
+        print()
+        for i in range(len(t.getChildren())):
+            for j in range(len(t.actions[i].observations)):
+                print(t.actions[i].observations[j], end=" ")
+        print()
+        for i in range(len(t.getChildren())):
+            for j in range(len(t.actions[i].observations)):
+                for h in range(len(t.actions[i].leading_state)):
+                    for e in range(len(t.actions[i].leading_state[h].getChildren())):
+                        print("a" + str(e), end=" ")
+
+
 if __name__ == "__main__":
-  test1 = Tree()
-  print("Empty Tree created")
-  test1.printTree(test1)
-
-
-  test = Tree([1,1,2])
-  print("next Tree created")
-  print("depth :",test.getDepth())
-  print()
-
-  test.insert([1,1.5])
-  test.insert([1,4,5,1])
-  test.printTree(test)
-  print("depth :",test.getChildren()[1].getDepth())
-
-  child = test.getChildren()[1]
-  child.insert([7,7])
-  test.printTree(test)
-  print("depth :", child.getDepth())
+    t = Tree(decision_state=True)
+    t.actions[0].insert_observation(0)
+    t.printTree()
