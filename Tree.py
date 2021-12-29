@@ -1,6 +1,7 @@
 class Tree:
-  def __init__(self, root_value = None, depth=0):
+  def __init__(self, root_value = None, observation = True, depth=0):
     self.root = root_value
+    self.observation_node = observation # racine = observation qui peut engendrer plusieurs actions
     self.children = [] 
     self.depth = depth
   
@@ -13,9 +14,16 @@ class Tree:
   def getChildren(self):
     return self.children
   
+  def getObservationStateStatus(self):
+    return self.observation_node
+  
   def insert(self, node):
     if self.root:
-      self.children.append(Tree(node, self.depth+1))
+      if self.observation_node :
+        observation = False
+        self.children.append(Tree(node, observation, self.depth+1))
+      else :
+        self.children.append(Tree(node, self.depth+1))
     else:
       self.root = node
   
@@ -36,7 +44,6 @@ class Tree:
         n -= 1
       print()
       
-
 if __name__ == "__main__":
   test1 = Tree()
   print("Empty Tree created")
@@ -56,4 +63,4 @@ if __name__ == "__main__":
   child = test.getChildren()[1]
   child.insert([7,7])
   test.printTree(test)
-  print("depth :", child.getChildren()[0].getDepth())
+  print("depth :", child.getDepth())
