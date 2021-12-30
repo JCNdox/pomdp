@@ -8,6 +8,7 @@ class Tree:
         self.state_counter = n_init
         self.state_value = v_init     # state value
         self.depth = depth
+        self.state = decision_state
 
         if decision_state:
             self.actions = []      # state's actions
@@ -21,8 +22,11 @@ class Tree:
     def getDepth(self):
         return self.depth
 
-    def getChildren(self):
+    def getActions(self):
         return self.actions
+
+    def getState(self):
+        return self.state
 
     def insert_observation(self, observation):
         self.observations.append(observation)
@@ -45,24 +49,53 @@ class Tree:
             values.append(node.state_value)
         return values
 
+    """
     def printTree(self):
         print("S0")
-        for i in range(len(t.getChildren())):
+        for i in range(len(t.getActions())):
             print("a" + str(i), end=" ")
         print()
-        for i in range(len(t.getChildren())):
+        for i in range(len(t.getActions())):
             for j in range(len(t.actions[i].observations)):
                 print(t.actions[i].observations[j], end=" ")
         print()
-        for i in range(len(t.getChildren())):
+        for i in range(len(t.getActions())):
             for j in range(len(t.actions[i].observations)):
                 for h in range(len(t.actions[i].leading_state)):
-                    for e in range(len(t.actions[i].leading_state[h].getChildren())):
+                    for e in range(len(t.actions[i].leading_state[h].getActions())):
                         print("a" + str(e), end=" ")
+    """
+
+    def printTree(self, root):
+        if (root.getState() == None):
+            print("empty root")
+            return None
+        q = []
+        q.append(root)
+        while (len(q) != 0):
+            n = len(q)
+            numb = 0
+            while (n > 0):
+                p = q[0]
+                q.pop(0)
+                #print(p)
+                if (p.state):
+                    print("O"+str(numb), end=" ")
+                    for i in range(len(p.actions)):
+                        q.append(p.actions[i])
+                else :
+                    print("a"+str(numb), end=" ")
+                    for i in range(len(p.leading_state)):
+                        q.append(p.leading_state[i])
+                n -= 1
+                numb += 1
+                #input()
+            print()
 
 
 if __name__ == "__main__":
-    t = Tree(4, decision_state=True)
+    t = Tree(len(ACTION), 0, 0, 0, True)
     t.actions[0].insert_observation(0)
     t.actions[1].insert_observation(0)
-    t.printTree()
+    t.printTree(t)
+    #t.printTree()
