@@ -1,10 +1,10 @@
-NUMBER_OF_ACTIONS = 4
 ACTION = ['left', 'down', 'right', 'up']
 
 
 class Tree:
 
-    def __init__(self, n_init=0, v_init=0, depth=0, decision_state=False):
+    def __init__(self, number_of_actions, n_init=0, v_init=0, depth=0, decision_state=False):
+        self.number_of_actions = number_of_actions
         self.state_counter = n_init
         self.state_value = v_init     # state value
         self.depth = depth
@@ -28,9 +28,22 @@ class Tree:
         self.observations.append(observation)
         self.leading_state.append(Tree(depth=self.depth + 1, decision_state=True))
 
+    def get_observation_pos(self, observation):
+        if observation in self.observations:
+            for j in range(len(self.observations)):
+                if self.observations[j] == observation:
+                    return j
+        return None
+
     def insert(self):
-        for action in range(NUMBER_OF_ACTIONS):
+        for action in range(self.number_of_actions):
             self.actions.append(Tree(depth=self.depth + 1))
+
+    def next_state_values(self):
+        values = []
+        for node in self.actions:
+            values.append(node.state_value)
+        return values
 
     def printTree(self):
         print("S0")
@@ -51,4 +64,5 @@ class Tree:
 if __name__ == "__main__":
     t = Tree(decision_state=True)
     t.actions[0].insert_observation(0)
+    #t.actions[1].insert_observation(0)
     t.printTree()
