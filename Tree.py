@@ -26,7 +26,7 @@ class Tree:
 
     def insert_observation(self, observation):
         self.observations.append(observation)
-        self.leading_state.append(Tree(depth=self.depth + 1, decision_state=True))
+        self.leading_state.append(Tree(self.number_of_actions, depth=self.depth + 1, decision_state=True))
 
     def get_observation_pos(self, observation):
         if observation in self.observations:
@@ -37,7 +37,7 @@ class Tree:
 
     def insert(self):
         for action in range(self.number_of_actions):
-            self.actions.append(Tree(depth=self.depth + 1))
+            self.actions.append(Tree(self.number_of_actions, depth=self.depth + 1))
 
     def next_state_values(self):
         values = []
@@ -62,7 +62,7 @@ class Tree:
 
 
 if __name__ == "__main__":
-    t = Tree(decision_state=True)
+    t = Tree(4, decision_state=True)
     t.actions[0].insert_observation(0)
-    #t.actions[1].insert_observation(0)
+    t.actions[1].insert_observation(0)
     t.printTree()
