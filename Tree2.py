@@ -1,16 +1,20 @@
 import math
+
 import numpy
+
 C = 0.2
+
 
 class Tree2:
 
-    def __init__(self, n_init=0, v_init=0, depth=0):
+    def __init__(self, n_init=0, v_init=0, depth=0, observation=False):
         self.state_counter = n_init
-        self.state_value = v_init     # state value
+        self.state_value = v_init  # state value
         self.depth = depth
+        self.observation = observation
 
         self.real_actions = []  # action to take
-        self.actions = []       # sub trees
+        self.actions = []  # sub trees
 
         self.states = []
 
@@ -26,11 +30,10 @@ class Tree2:
 
     def increment_next_state_value(self, action, r):
         next_state = self.get_leading_state(action)
-        value = r
-        next_state.incement_state_value(value)
+        next_state.incement_state_value(r)
 
     def increment_state_value(self, value):
-        self.state_value += (value - self.state_value)/self.state_counter
+        self.state_value += (value - self.state_value) / self.state_counter
 
     def get_state_value(self):
         return self.state_value
@@ -41,7 +44,7 @@ class Tree2:
 
     def add_child(self, action):
         self.real_actions.append(action)
-        self.actions.append(Tree2())
+        self.actions.append(Tree2(observation=True))
 
     def add_observation(self, observation):
         self.real_actions.append(observation)
@@ -61,16 +64,23 @@ class Tree2:
     def next_state_values(self):
         values = []
         for node in self.actions:
-            Q_value = node.get_state_value + C * math.sqrt(numpy.log(self.get_state_counter())/node.get_state_counter())
-            values.append(node.state_value)
+            Q_value = node.get_state_value + C * math.sqrt(
+                numpy.log(self.get_state_counter()) / node.get_state_counter())
+            values.append(Q_value)
         return values
+
+    def is_observation_node(self):
+        return self.observation
 
     def printTree(self, root):
         if (not root.actions):
             print("empty root")
             return None
         q = []
-        q.append(root)
+        print('Root')
+        for action in root.actions:
+            q.append(action)
+        #q.append(root)
         while (len(q) != 0):
             n = len(q)
             numb = 0
@@ -78,19 +88,23 @@ class Tree2:
                 p = q[0]
                 q.pop(0)
                 #print(p)
-                if (numb%0 == 0):
+                if not p.is_observation_node():
                     print("O"+str(numb), end=" ")
                     for i in range(len(p.actions)):
-                        q.append(p.real_actions[i])
-                else :
+                        q.append(p.actions[i])
+                else:
                     print("a"+str(numb), end=" ")
                     for i in range(len(p.actions)):
-                        q.append(p.real_actions[i])
+                        q.append(p.actions[i])
                 n -= 1
                 numb += 1
             print()
 
 
 if __name__ == "__main__":
+    ACTION = ['left', 'down', 'right', 'up']
     t = Tree2()
-    #t.printTree(t)
+    for action in ACTION:
+        t.add_child(action)
+
+    t.printTree(t)

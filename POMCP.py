@@ -180,7 +180,7 @@ if __name__ == '__main__':
         env.render()
         r += rw * discount
         discount *= env._discount
-        agent.tree.printTree()
+
         if done:
             break
     print(r)
