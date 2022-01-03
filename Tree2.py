@@ -66,8 +66,31 @@ class Tree2:
         return values
 
     def printTree(self, root):
-        pass
+        if (not root.actions):
+            print("empty root")
+            return None
+        q = []
+        q.append(root)
+        while (len(q) != 0):
+            n = len(q)
+            numb = 0
+            while (n > 0):
+                p = q[0]
+                q.pop(0)
+                #print(p)
+                if (numb%0 == 0):
+                    print("O"+str(numb), end=" ")
+                    for i in range(len(p.actions)):
+                        q.append(p.real_actions[i])
+                else :
+                    print("a"+str(numb), end=" ")
+                    for i in range(len(p.actions)):
+                        q.append(p.real_actions[i])
+                n -= 1
+                numb += 1
+            print()
 
 
 if __name__ == "__main__":
     t = Tree2()
+    #t.printTree(t)
