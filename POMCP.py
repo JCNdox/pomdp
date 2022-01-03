@@ -51,12 +51,6 @@ class POMCP:
         return
         return np.argmax("best_move")
 
-    def history_in_tree(self, h):
-        if len(h) == 0 and self.tree is None:
-            return False
-
-        pass
-
     def get_node(self, h):
         node = self.tree
         if self.tree is not None:
@@ -88,9 +82,6 @@ class POMCP:
                     node_in_tree = False
                     break
         return node, node_in_tree
-
-    def add_history_in_tree(self):
-        pass
 
     def simulate(self, state, history, depth):
         """
@@ -126,12 +117,18 @@ class POMCP:
             return self.rollout(state, history, depth)
 
         # playing IN THE TREE policy (greedy with exploration)
-        a = np.argmax(node.next_state_values())
+        a = node.real_actions(np.argmax(node.next_state_values()))
         # playing this move will lead you to new state s2 + reward r + observation o
+        next_ob, rw, done, info = self.simulator.step(a)
+        history.append(a)
+        history.append(next_ob)
+        R = rw + self.gamma * self.simulate(info['state'], history, depth+1)
 
-        R = r + self.gamma * self.simulate(s2, h + a + o, depth + 1)
         # update the nodes counters ....
-
+        node.add_state(state)
+        node.increment_state_counter()
+        node.increment_action_counter(a)
+        node.increment_next_state_value(a, R)
         return R
 
     def rollout(self, state, history, depth):

@@ -1,4 +1,6 @@
-
+import math
+import numpy
+C = 0.2
 
 class Tree2:
 
@@ -9,6 +11,33 @@ class Tree2:
 
         self.real_actions = []  # action to take
         self.actions = []       # sub trees
+
+        self.states = []
+
+    def get_state_counter(self):
+        return self.state_counter
+
+    def increment_state_counter(self):
+        self.state_counter += 1
+
+    def increment_action_counter(self, action):
+        next_state = self.get_leading_state(action)
+        next_state.increment_state_counter()
+
+    def increment_next_state_value(self, action, r):
+        next_state = self.get_leading_state(action)
+        value = r
+        next_state.incement_state_value(value)
+
+    def increment_state_value(self, value):
+        self.state_value += (value - self.state_value)/self.state_counter
+
+    def get_state_value(self):
+        return self.state_value
+
+    def add_state(self, state):
+        if state not in self.states:
+            self.states.append(state)
 
     def add_child(self, action):
         self.real_actions.append(action)
@@ -28,6 +57,13 @@ class Tree2:
 
     def contains(self, action):
         return action in self.real_actions
+
+    def next_state_values(self):
+        values = []
+        for node in self.actions:
+            Q_value = node.get_state_value + C * math.sqrt(numpy.log(self.get_state_counter())/node.get_state_counter())
+            values.append(node.state_value)
+        return values
 
     def printTree(self, root):
         pass
