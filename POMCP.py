@@ -1,7 +1,11 @@
 import numpy as np
+from gym_pomdp.envs import rock
+from copy import deepcopy
+import gym_pomdp.envs.rock as pkg
 
 # Skeleton code
 from Tree import Tree
+from Tree2 import Tree2
 
 
 class POMCP:
@@ -15,6 +19,13 @@ class POMCP:
         self.history = []
         self.simulator = simulator
 
+    def belief_sate(self, history):
+        self.simulator.reset()
+        for action in range(0, len(history), 2):
+            self.simulator.step(history[action])
+        state = self.simulator.state
+        return self.simulator._encode_state(state)
+
     def search(self, history):
         """
         Starting from a history, this function will sample a state from either the initial states or the Belief states
@@ -27,16 +38,17 @@ class POMCP:
         for simulation in range(self.number_of_simulations):
             if len(history) == 0:
                 # sample a initial state
-                pass
+                state = self.simulator._encode_state(self.simulator.state)
             else:
                 # sample from Belief states
-                pass
-            state = None    # should be remove when above is implemented
+                state = self.belief_sate(history)
 
             # start simulation from this history
             self.simulate(state, history, 0)
 
         # playing the best move
+        print("search = ", state)
+        return
         return np.argmax("best_move")
 
     def history_in_tree(self, h):
@@ -64,6 +76,19 @@ class POMCP:
             node_in_tree = False
         return node, node_in_tree
 
+    def get_node2(self, h):
+        node_in_tree = False
+        node = self.tree
+        if node is not None:
+            node_in_tree = True
+            for elem in h:
+                if node.contains(elem):
+                    node = node.get_leading_state(elem)
+                else:
+                    node_in_tree = False
+                    break
+        return node, node_in_tree
+
     def add_history_in_tree(self):
         pass
 
@@ -81,15 +106,21 @@ class POMCP:
             # first end of simulation
             return 0
 
-        node, in_tree = self.get_node(history)
+        node, in_tree = self.get_node2(history)
 
         if not in_tree:
+            moves = self.simulator._generate_legal()
             if node is None:
                 # building a tree
-                self.tree = Tree(decision_state=True)
+                self.tree = Tree2()
+                for action in moves:
+                    self.tree.add_child(action)
             else:
                 # extend tree
-                node.insert_observation(history[-1])
+                node.add_observation(history[-1])
+                node = node.get_leading_state(history[-1])
+                for action in moves:
+                    node.add_child(action)
 
             # playing OUT OF THE TREE policy (random play)
             return self.rollout(state, history, depth)
@@ -97,6 +128,7 @@ class POMCP:
         # playing IN THE TREE policy (greedy with exploration)
         a = np.argmax(node.next_state_values())
         # playing this move will lead you to new state s2 + reward r + observation o
+
         R = r + self.gamma * self.simulate(s2, h + a + o, depth + 1)
         # update the nodes counters ....
 
@@ -116,10 +148,42 @@ class POMCP:
             return 0
 
         # otherwise keep playing randomly
-        a = np.random.randint(self.number_of_actions)
+        self.simulator._set_state(state)
+        a = np.random.choice(self.simulator._generate_legal())
         # playing this move will lead you to new state s2 + reward r + observation o
-        return r + self.gamma * self.rollout(s2, h + a + o, depth + 1)
+        next_ob, rw, done, info = self.simulator.step(a)
+        history.append(a)
+        history.append(next_ob)
+        return rw + self.gamma * self.rollout(info['state'], history, depth + 1)
 
 
 if __name__ == '__main__':
-    print("Hello world ")
+    history = pkg.History()
+    env = pkg.RockEnv(board_size=4, num_rocks=3, use_heuristic=False)
+    ob = env.reset()
+    simulator = deepcopy(env)
+    env.render()
+    r = 0
+    discount = 1.
+    agent = POMCP(simulator=simulator)
+    hist = []
+    agent.search(deepcopy(hist))
+    for i in range(400):
+
+        print(env._generate_preferred(history))
+        action = int(input())
+        next_ob, rw, done, info = env.step(action)
+        print(next_ob, rw, done, info['state'])
+        history.append(pkg.Transition(ob, action, next_ob, rw, done))
+        hist.append(action)
+        hist.append(ob)
+        print("history so far : ", hist)
+        action = agent.search(deepcopy(hist))
+        ob = next_ob
+        env.render()
+        r += rw * discount
+        discount *= env._discount
+        agent.tree.printTree()
+        if done:
+            break
+    print(r)

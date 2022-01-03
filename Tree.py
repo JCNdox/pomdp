@@ -3,14 +3,15 @@ ACTION = ['left', 'down', 'right', 'up']
 
 class Tree:
 
-    def __init__(self, number_of_actions, n_init=0, v_init=0, depth=0, decision_state=False):
-        self.number_of_actions = number_of_actions
+    def __init__(self, number_of_actions, moves=None, n_init=0, v_init=0, depth=0, decision_state=False):
         self.state_counter = n_init
         self.state_value = v_init     # state value
         self.depth = depth
         self.state = decision_state
 
         if decision_state:
+            self.number_of_actions = len(moves)
+            self.moves = moves      # real actions to take
             self.actions = []      # state's actions
             self.actions_counter = []   # actions counter
             self.belief_state = None    # state's belief state
@@ -28,9 +29,9 @@ class Tree:
     def getState(self):
         return self.state
 
-    def insert_observation(self, observation):
+    def insert_observation(self, observation, moves):
         self.observations.append(observation)
-        self.leading_state.append(Tree(self.number_of_actions, depth=self.depth + 1, decision_state=True))
+        self.leading_state.append(Tree(len(moves), moves=moves, depth=self.depth + 1, decision_state=True))
 
     def get_observation_pos(self, observation):
         if observation in self.observations:
