@@ -165,6 +165,7 @@ if __name__ == '__main__':
     agent = POMCP(simulator=simulator)
     hist = []
     agent.search(deepcopy(hist))
+    print(agent.tree.printTree())
     for i in range(400):
 
         print(env._generate_preferred(history))
@@ -179,6 +180,7 @@ if __name__ == '__main__':
         ob = next_ob
         env.render()
         r += rw * discount
+        print(agent.tree.printTree())
         discount *= env._discount
 
         if done:

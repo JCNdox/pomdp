@@ -72,13 +72,13 @@ class Tree2:
     def is_observation_node(self):
         return self.observation
 
-    def printTree(self, root):
-        if (not root.actions):
+    def printTree(self):
+        if (not self.actions):
             print("empty root")
             return None
         q = []
         print('Root')
-        for action in root.actions:
+        for action in self.actions:
             q.append(action)
         #q.append(root)
         while (len(q) != 0):
@@ -106,5 +106,7 @@ if __name__ == "__main__":
     t = Tree2()
     for action in ACTION:
         t.add_child(action)
-
+    t.actions[0].add_observation(2)
+    t.actions[0].add_observation(3)
+    t.actions[1].add_observation(2)
     t.printTree(t)
