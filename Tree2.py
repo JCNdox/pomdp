@@ -1,8 +1,8 @@
 import math
 
-import numpy
+import numpy as np
 
-C = 0.2
+C = 2
 
 
 class Tree2:
@@ -30,7 +30,7 @@ class Tree2:
 
     def increment_next_state_value(self, action, r):
         next_state = self.get_leading_state(action)
-        next_state.incement_state_value(r)
+        next_state.increment_state_value(r)
 
     def increment_state_value(self, value):
         self.state_value += (value - self.state_value) / self.state_counter
@@ -62,12 +62,39 @@ class Tree2:
         return action in self.real_actions
 
     def next_state_values(self):
+        """
+        Gives You all the Q_values of actions from this state
+        :return: list of Q_values (v(ha) for all a)
+        """
         values = []
         for node in self.actions:
-            Q_value = node.get_state_value + C * math.sqrt(
-                numpy.log(self.get_state_counter()) / node.get_state_counter())
+            Q_value = node.get_state_value() + C * math.sqrt(
+                np.log(self.get_state_counter()) / (node.get_state_counter()))
             values.append(Q_value)
         return values
+
+    def tree_policy(self):
+        """
+        Playing the rollout policy until when each move has been played once. After that Play the best move
+        with some bonus point if a node has rarely been explored
+        :return: the action to play
+        """
+        if not self.played_all_actions_once():
+            return self.real_actions[np.random.randint(0, len(self.actions)-1)]    # Playing the rollout policy in tree
+        else:
+            return self.real_actions[np.argmax(self.next_state_values())]  # playing greedy action + bonus exploration
+
+    def played_all_actions_once(self):
+        """
+        Check that we have try at least once each actions
+        :return: bool true or false
+        """
+        flag = True
+        for action in self.actions:
+            if action.get_state_counter() == 0:
+                flag = False
+                break
+        return flag
 
     def is_observation_node(self):
         return self.observation

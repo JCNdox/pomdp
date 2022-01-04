@@ -10,7 +10,7 @@ from Tree2 import Tree2
 
 class POMCP:
 
-    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=1):
+    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=3):
         self.gamma = gamma
         self.epsilon = epsilon
         self.number_of_actions = number_actions
@@ -21,6 +21,7 @@ class POMCP:
 
     def belief_sate(self, history):
         self.simulator.reset()
+        print("playing : ", history)
         for action in range(0, len(history), 2):
             self.simulator.step(history[action])
         state = self.simulator.state
@@ -38,13 +39,15 @@ class POMCP:
         for simulation in range(self.number_of_simulations):
             if len(history) == 0:
                 # sample a initial state
+                self.simulator.reset()
                 state = self.simulator._encode_state(self.simulator.state)
             else:
                 # sample from Belief states
                 state = self.belief_sate(history)
 
             # start simulation from this history
-            self.simulate(state, history, 0)
+            print("Simulation return  = ", self.simulate(state, deepcopy(history), 0))
+            print(agent.tree.printTree())
 
         # playing the best move
         print("search = ", state)
@@ -117,8 +120,11 @@ class POMCP:
             return self.rollout(state, history, depth)
 
         # playing IN THE TREE policy (greedy with exploration)
-        a = node.real_actions(np.argmax(node.next_state_values()))
+        #print(agent.tree.printTree())
+
+        a = node.tree_policy()
         # playing this move will lead you to new state s2 + reward r + observation o
+        self.simulator._set_state(state)
         next_ob, rw, done, info = self.simulator.step(a)
         history.append(a)
         history.append(next_ob)
@@ -164,23 +170,28 @@ if __name__ == '__main__':
     discount = 1.
     agent = POMCP(simulator=simulator)
     hist = []
-    agent.search(deepcopy(hist))
-    print(agent.tree.printTree())
+    #agent.search(deepcopy(hist))
+    #print(agent.tree.printTree())
     for i in range(400):
 
-        print(env._generate_preferred(history))
+        print("History so far : ", hist)
+        action = agent.search(deepcopy(hist))
+        print(agent.tree.printTree())
+
+        ###############################################
+        print("Play one move in = ", env._generate_preferred(history))
         action = int(input())
         next_ob, rw, done, info = env.step(action)
-        print(next_ob, rw, done, info['state'])
+        ob = next_ob
         history.append(pkg.Transition(ob, action, next_ob, rw, done))
+        ###############################################
+
         hist.append(action)
         hist.append(ob)
-        print("history so far : ", hist)
-        action = agent.search(deepcopy(hist))
-        ob = next_ob
+
+        #print(next_ob, rw, done, info['state'])
         env.render()
         r += rw * discount
-        print(agent.tree.printTree())
         discount *= env._discount
 
         if done:
