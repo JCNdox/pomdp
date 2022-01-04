@@ -46,13 +46,13 @@ class POMCP:
                 state = self.simulator._encode_state(self.simulator.state)
             else:
                 # sample from Belief state
-                state = np.random.choice(agent.tree.get_belief_state())
+                state = np.random.choice(self.tree.get_belief_state())
             # start simulation from this history
             print("Simulation return  = ", self.simulate(state, [], 0))
-            print(agent.tree.printTree())
+            print(self.tree.printTree())
 
         # playing the best move
-        best_action = agent.tree.real_actions[np.argmax(agent.tree.next_state_values(0))]
+        best_action = self.tree.real_actions[np.argmax(self.tree.next_state_values(0))]
         print("Best action", best_action)
         #print("search = ", state)
         # rebase tree !!
