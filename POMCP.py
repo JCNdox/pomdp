@@ -10,13 +10,11 @@ from Tree2 import Tree2
 
 class POMCP:
 
-    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=100):
+    def __init__(self, gamma=0.3, epsilon=0.001, simulator=None, number_of_simulations=100):
         self.gamma = gamma
         self.epsilon = epsilon
-        self.number_of_actions = number_actions
         self.number_of_simulations = number_of_simulations
         self.tree = None
-        self.history = []
         self.simulator = simulator
 
     def rebase_tree(self, action, observation):
@@ -149,23 +147,29 @@ class POMCP:
 
 if __name__ == '__main__':
     history = pkg.History()
+
+    # initiating game
     env = pkg.RockEnv(board_size=4, num_rocks=3, use_heuristic=False)
     ob = env.reset()
     simulator = deepcopy(env)
+
+    agent = POMCP(simulator=simulator)
+    # pay attention to gamma=0.3, epsilon=0.001 and C for exploration !! parameters
+
+    # starting the game gui
     env.render()
     r = 0
     discount = 1.
-    agent = POMCP(simulator=simulator)
     hist = []
-    #agent.search(deepcopy(hist))
-    #print(agent.tree.printTree())
+
     for i in range(400):
 
         print("History so far : ", hist)
-        action = agent.search(deepcopy(hist))
+        action = agent.search(hist)
 
 
         ###############################################
+        # in order to play your self
         print("Play one move in = ", env._generate_legal())
         action = int(input())
         next_ob, rw, done, info = env.step(action)
@@ -177,14 +181,13 @@ if __name__ == '__main__':
         hist.append(ob)
         # rebase tree
         agent.rebase_tree(action, ob)
-        #print("Rebased tree : ")
-        #print(agent.tree.printTree())
 
-        #print(next_ob, rw, done, info['state'])
+
         env.render()
         r += rw * discount
         discount *= env._discount
 
         if done:
             break
+    # End game
     print(r)
