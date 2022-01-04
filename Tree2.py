@@ -16,7 +16,7 @@ class Tree2:
         self.real_actions = []  # action to take
         self.actions = []  # sub trees
 
-        self.states = []
+        self.belief_state = []
 
     def get_state_counter(self):
         return self.state_counter
@@ -38,9 +38,12 @@ class Tree2:
     def get_state_value(self):
         return self.state_value
 
-    def add_state(self, state):
-        if state not in self.states:
-            self.states.append(state)
+    def add_to_belief_state(self, state):
+        if state not in self.belief_state:
+            self.belief_state.append(state)
+
+    def get_belief_state(self):
+        return self.belief_state
 
     def add_child(self, action):
         self.real_actions.append(action)
@@ -61,14 +64,14 @@ class Tree2:
     def contains(self, action):
         return action in self.real_actions
 
-    def next_state_values(self):
+    def next_state_values(self, exploration):
         """
         Gives You all the Q_values of actions from this state
         :return: list of Q_values (v(ha) for all a)
         """
         values = []
         for node in self.actions:
-            Q_value = node.get_state_value() + C * math.sqrt(
+            Q_value = node.get_state_value() + exploration * math.sqrt(
                 np.log(self.get_state_counter()) / (node.get_state_counter()))
             values.append(Q_value)
         return values
@@ -82,7 +85,7 @@ class Tree2:
         if not self.played_all_actions_once():
             return self.real_actions[np.random.randint(0, len(self.actions))]    # Playing the rollout policy in tree
         else:
-            return self.real_actions[np.argmax(self.next_state_values())]  # playing greedy action + bonus exploration
+            return self.real_actions[np.argmax(self.next_state_values(C))]  # playing greedy action + bonus exploration
 
     def played_all_actions_once(self):
         """

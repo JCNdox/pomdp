@@ -10,7 +10,7 @@ from Tree2 import Tree2
 
 class POMCP:
 
-    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=15):
+    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=100):
         self.gamma = gamma
         self.epsilon = epsilon
         self.number_of_actions = number_actions
@@ -19,7 +19,12 @@ class POMCP:
         self.history = []
         self.simulator = simulator
 
-    def belief_sate(self, history):
+    def rebase_tree(self, action, observation):
+        new_root = self.tree.get_leading_state(action)
+        new_root = new_root.get_leading_state(observation)
+        self.tree = new_root
+
+    def belief_state(self, history):
         self.simulator.reset()
         print("playing : ", history)
         for action in range(0, len(history), 2):
@@ -42,38 +47,20 @@ class POMCP:
                 self.simulator.reset()
                 state = self.simulator._encode_state(self.simulator.state)
             else:
-                # sample from Belief states
-                state = self.belief_sate(history)
-
+                # sample from Belief state
+                state = np.random.choice(agent.tree.get_belief_state())
             # start simulation from this history
-            print("Simulation return  = ", self.simulate(state, deepcopy(history), 0))
+            print("Simulation return  = ", self.simulate(state, [], 0))
             print(agent.tree.printTree())
 
         # playing the best move
-        print("search = ", state)
-        return
-        return np.argmax("best_move")
+        best_action = agent.tree.real_actions[np.argmax(agent.tree.next_state_values(0))]
+        print("Best action", best_action)
+        #print("search = ", state)
+        # rebase tree !!
+        return best_action
 
     def get_node(self, h):
-        node = self.tree
-        if self.tree is not None:
-            node_in_tree = True
-            for i in range(len(h)):
-                if i % 2 == 0:
-                    # action
-                    node = node.actions[h[i]]   # taking an action
-                else:
-                    # observation
-                    pos = node.get_observation_pos(h[i])    # observation state
-                    if pos is None:
-                        node_in_tree = False
-                        break
-                    node = node.leading_state[pos]
-        else:
-            node_in_tree = False
-        return node, node_in_tree
-
-    def get_node2(self, h):
         node_in_tree = False
         node = self.tree
         if node is not None:
@@ -100,7 +87,7 @@ class POMCP:
             # first end of simulation
             return 0
 
-        node, in_tree = self.get_node2(history)
+        node, in_tree = self.get_node(history)
 
         if not in_tree:
             moves = self.simulator._generate_legal()
@@ -131,7 +118,7 @@ class POMCP:
         R = rw + self.gamma * self.simulate(info['state'], history, depth+1)
 
         # update the nodes counters ....
-        node.add_state(state)
+        node.add_to_belief_state(state)
         node.increment_state_counter()
         node.increment_action_counter(a)
         node.increment_next_state_value(a, R)
@@ -179,7 +166,7 @@ if __name__ == '__main__':
 
 
         ###############################################
-        print("Play one move in = ", env._generate_preferred(history))
+        print("Play one move in = ", env._generate_legal())
         action = int(input())
         next_ob, rw, done, info = env.step(action)
         ob = next_ob
@@ -188,6 +175,10 @@ if __name__ == '__main__':
 
         hist.append(action)
         hist.append(ob)
+        # rebase tree
+        agent.rebase_tree(action, ob)
+        #print("Rebased tree : ")
+        #print(agent.tree.printTree())
 
         #print(next_ob, rw, done, info['state'])
         env.render()
