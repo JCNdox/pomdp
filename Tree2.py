@@ -80,7 +80,7 @@ class Tree2:
         :return: the action to play
         """
         if not self.played_all_actions_once():
-            return self.real_actions[np.random.randint(0, len(self.actions)-1)]    # Playing the rollout policy in tree
+            return self.real_actions[np.random.randint(0, len(self.actions))]    # Playing the rollout policy in tree
         else:
             return self.real_actions[np.argmax(self.next_state_values())]  # playing greedy action + bonus exploration
 
@@ -104,7 +104,7 @@ class Tree2:
             print("empty root")
             return None
         q = []
-        print('Root')
+        print('Root c='+str(self.get_state_counter()))
         for action in self.actions:
             q.append(action)
         #q.append(root)
@@ -120,7 +120,7 @@ class Tree2:
                     for i in range(len(p.actions)):
                         q.append(p.actions[i])
                 else:
-                    print("a"+str(numb), end=" ")
+                    print("a"+str(numb)+" c="+str(p.get_state_counter()), end=" ")
                     for i in range(len(p.actions)):
                         q.append(p.actions[i])
                 n -= 1

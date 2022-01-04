@@ -10,7 +10,7 @@ from Tree2 import Tree2
 
 class POMCP:
 
-    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=3):
+    def __init__(self, gamma=0.3, epsilon=0.001, number_actions=4, simulator=None, number_of_simulations=15):
         self.gamma = gamma
         self.epsilon = epsilon
         self.number_of_actions = number_actions
@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
         print("History so far : ", hist)
         action = agent.search(deepcopy(hist))
-        print(agent.tree.printTree())
+
 
         ###############################################
         print("Play one move in = ", env._generate_preferred(history))
