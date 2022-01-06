@@ -38,8 +38,17 @@ class Tree2:
         return self.state_value
 
     def add_to_belief_state(self, state):
-        if state not in self.belief_state:
+        if len(self.belief_state) == 0:
             self.belief_state.append(state)
+        else:
+            add = True
+            for elem in self.belief_state:
+                if state.same_state(elem):
+                    # The state is already in the belief states so we should not add it again !
+                    add = False
+                    break
+            if add:
+                self.belief_state.append(state)
 
     def get_belief_state(self):
         return self.belief_state

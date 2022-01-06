@@ -22,14 +22,6 @@ class POMCP:
         new_root = new_root.get_leading_state(observation)
         self.tree = new_root
 
-    def belief_state(self, history):
-        self.simulator.reset()
-        print("playing : ", history)
-        for action in range(0, len(history), 2):
-            self.simulator.step(history[action])
-        state = self.simulator.state
-        return self.simulator._encode_state(state)
-
     def search(self, history):
         """
         Starting from a history, this function will sample a state from either the initial states or the Belief states
@@ -38,24 +30,39 @@ class POMCP:
         :param history: the current sequence of actions and observations that the agent had
         :return: the best action for the agent according to the history.
         """
-
         for simulation in range(self.number_of_simulations):
             if len(history) == 0:
-                # sample a initial state
-                self.simulator.reset()
-                state = self.simulator._encode_state(self.simulator.state)
+                # sample an initial state
+                self.simulator.reset()          # new game
+                state = self.simulator.get_state()  # new initial state
+                #self.simulator.print_state(state)
             else:
                 # sample from Belief state
+                #for e in self.tree.get_belief_state():
+                 #   self.simulator.print_state(e)
                 state = np.random.choice(self.tree.get_belief_state())
+                self.simulator.set_state(state)    # putting the state in the simulator
+                #print(state)
+
             # start simulation from this history
-            print("Simulation return  = ", self.simulate(state, [], 0))
-            print(self.tree.printTree())
+            si = self.simulate(state, [], 0)
+            #print("Simulation return  = ", si)
+            #print(self.tree.printTree())
+
+        #print("belief_state")
+        #for e in self.tree.get_belief_state():
+        #    print(e.remaining_actions, e.total_remaining, [a.pos for a in e.ships])
+        print(self.tree.printTree())
 
         # playing the best move
         best_action = self.tree.real_actions[np.argmax(self.tree.next_state_values(0))]
         print("Best action", best_action)
+        print("Observations = ", self.tree.get_leading_state(best_action).real_actions)
+        print("belief_state")
+        for e in self.tree.get_belief_state():
+            print(e.remaining_actions, e.total_remaining, [a.pos for a in e.ships])
+
         #print("search = ", state)
-        # rebase tree !!
         return best_action
 
     def get_node(self, h):
@@ -81,14 +88,13 @@ class POMCP:
         :param depth:
         :return:
         """
-        if self.gamma ** depth < self.epsilon:
+        if self.gamma ** depth < self.epsilon or self.simulator.done:
             # first end of simulation
             return 0
 
         node, in_tree = self.get_node(history)
-
         if not in_tree:
-            moves = self.simulator._generate_legal()
+            moves = self.simulator.get_possible_actions()
             if node is None:
                 # building a tree
                 self.tree = Tree2()
@@ -102,21 +108,22 @@ class POMCP:
                     node.add_child(action)
 
             # playing OUT OF THE TREE policy (random play)
-            return self.rollout(state, history, depth)
+            return self.rollout(deepcopy(state), deepcopy(history), depth)
 
         # playing IN THE TREE policy (greedy with exploration)
         #print(agent.tree.printTree())
 
         a = node.tree_policy()
         # playing this move will lead you to new state s2 + reward r + observation o
-        self.simulator._set_state(state)
+        self.simulator.set_state(deepcopy(state))       # deepcopy otherwise belief state update issue
         next_ob, rw, done, info = self.simulator.step(a)
         history.append(a)
         history.append(next_ob)
         R = rw + self.gamma * self.simulate(info['state'], history, depth+1)
 
+
         # update the nodes counters ....
-        node.add_to_belief_state(state)
+        node.add_to_belief_state(deepcopy(state))
         node.increment_state_counter()
         node.increment_action_counter(a)
         node.increment_next_state_value(a, R)
@@ -131,17 +138,17 @@ class POMCP:
         :param depth: depth
         :return: reward got throughout the simulation
         """
-        if self.gamma ** depth < self.epsilon:
+        if self.gamma ** depth < self.epsilon or self.simulator.done:
             # end of simulation
             return 0
 
         # otherwise keep playing randomly
-        self.simulator._set_state(state)
-        a = np.random.choice(self.simulator._generate_legal())
+        self.simulator.set_state(state)
+        #print(self.simulator.get_possible_actions())
+        a = np.random.choice(self.simulator.get_possible_actions())
+        #print(a)
         # playing this move will lead you to new state s2 + reward r + observation o
         next_ob, rw, done, info = self.simulator.step(a)
-        history.append(a)
-        history.append(next_ob)
         return rw + self.gamma * self.rollout(info['state'], history, depth + 1)
 
 
@@ -153,7 +160,7 @@ if __name__ == '__main__':
     ob = env.reset()
     simulator = deepcopy(env)
 
-    agent = POMCP(simulator=simulator)
+    agent = POMCP(gamma=1, simulator=simulator, number_of_simulations=500)
     # pay attention to gamma=0.3, epsilon=0.001 and C for exploration !! parameters
 
     # starting the game gui
@@ -165,12 +172,13 @@ if __name__ == '__main__':
     for i in range(400):
 
         print("History so far : ", hist)
+        #print("Game state = ", env._encode_state(env.state))
         action = agent.search(hist)
 
 
         ###############################################
         # in order to play your self
-        print("Play one move in = ", env._generate_legal())
+        print("Play one move in = ", env.get_possible_actions())
         action = int(input())
         next_ob, rw, done, info = env.step(action)
         ob = next_ob
@@ -179,9 +187,6 @@ if __name__ == '__main__':
 
         hist.append(action)
         hist.append(ob)
-        # rebase tree
-        agent.rebase_tree(action, ob)
-
 
         env.render()
         r += rw * discount
@@ -189,5 +194,8 @@ if __name__ == '__main__':
 
         if done:
             break
+        else:
+            # rebase tree
+            agent.rebase_tree(action, ob)
     # End game
     print(r)

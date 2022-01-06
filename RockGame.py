@@ -10,10 +10,11 @@ if __name__ == '__main__':
     ob = env.reset()
     simulator = deepcopy(env)
 
-    agent = POMCP(simulator=simulator)
+    agent = POMCP(gamma=0.8, simulator=simulator, number_of_simulations=100)
     # pay attention to gamma=0.3, epsilon=0.001 and C for exploration !! parameters
 
     # Start game
+    env.render()
     r = 0
     discount = 1.
     hist = []
@@ -28,12 +29,13 @@ if __name__ == '__main__':
         hist.append(action)
         hist.append(next_ob)
 
-        # rebase tree
-        agent.rebase_tree(action, next_ob)
-
+        env.render()
         r += rw * discount
         discount *= env._discount
         if done:
             break
+        else:
+            # rebase tree
+            agent.rebase_tree(action, next_ob)
     # End game
     print(r)
