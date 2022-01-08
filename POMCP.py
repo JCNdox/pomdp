@@ -9,15 +9,23 @@ from Tree2 import Tree2
 
 
 class POMCP:
+    """
+    Partially Observable Monte-Carlo Planning
+    """
 
     def __init__(self, gamma=0.3, epsilon=0.001, simulator=None, number_of_simulations=100):
         self.gamma = gamma
         self.epsilon = epsilon
         self.number_of_simulations = number_of_simulations
         self.tree = None
-        self.simulator = simulator
+        self.simulator = simulator  # Black box simulator
 
     def rebase_tree(self, action, observation):
+        """
+        rebase the tree of the agent when the agent has played his move and obtained the observation (tree pruning).
+        :param action: action played by the agent
+        :param observation: observation obtained by playing this action
+        """
         new_root = self.tree.get_leading_state(action)
         new_root = new_root.get_leading_state(observation)
         self.tree = new_root
@@ -27,7 +35,7 @@ class POMCP:
         Starting from a history, this function will sample a state from either the initial states or the Belief states
         then it will construct a search tree by doing some simulations. At the end it will return the best move for that
         history.
-        :param history: the current sequence of actions and observations that the agent had
+        :param history: the current sequence of actions and observations that the agent has
         :return: the best action for the agent according to the history.
         """
         for simulation in range(self.number_of_simulations):
@@ -35,37 +43,29 @@ class POMCP:
                 # sample an initial state
                 self.simulator.reset()          # new game
                 state = self.simulator.get_state()  # new initial state
-                #self.simulator.print_state(state)
+                # self.simulator.print_state(state)
             else:
                 # sample from Belief state
-                #for e in self.tree.get_belief_state():
-                 #   self.simulator.print_state(e)
                 state = np.random.choice(self.tree.get_belief_state())
                 self.simulator.set_state(state)    # putting the state in the simulator
-                #print(state)
 
             # start simulation from this history
             si = self.simulate(state, [], 0)
-            #print("Simulation return  = ", si)
-            #print(self.tree.printTree())
-
-        #print("belief_state")
-        #for e in self.tree.get_belief_state():
-        #    print(e.remaining_actions, e.total_remaining, [a.pos for a in e.ships])
-        print(self.tree.printTree())
+            # print("Simulation return  = ", si)
+        # print(self.tree.printTree())
 
         # playing the best move
         best_action = self.tree.real_actions[np.argmax(self.tree.next_state_values(0))]
-        print("Best action", best_action)
-        print("Observations = ", self.tree.get_leading_state(best_action).real_actions)
-        print("belief_state")
-        for e in self.tree.get_belief_state():
-            print(e.remaining_actions, e.total_remaining, [a.pos for a in e.ships])
-
-        #print("search = ", state)
         return best_action
 
     def get_node(self, h):
+        """
+        Starting from a history h, this function search if this sequence of actions and observations has already been
+        explore by the agent or not. In the first case it will return true and the node/state of the agent otherwise it
+        returns False and the last node or the tree according to the history
+        :param h: history
+        :return: state and boolean
+        """
         node_in_tree = False
         node = self.tree
         if node is not None:
@@ -80,16 +80,16 @@ class POMCP:
 
     def simulate(self, state, history, depth):
         """
-        This function will run a simulation of the game. It will choose action randomly out the tree and in the tree it will
-        act greedy. At the end the function will update the tree variables and return the reward we got by playing this
-        sequence of actions.
+        This function will run a simulation of the game. It will choose action randomly out the tree and in the tree it
+        will use the tree policy. At the end the function will update the tree counters and return the reward we got by
+        playing this sequence of actions.
         :param state:
         :param history:
         :param depth:
         :return:
         """
         if self.gamma ** depth < self.epsilon or self.simulator.done:
-            # first end of simulation
+            # End of simulation
             return 0
 
         node, in_tree = self.get_node(history)
@@ -110,17 +110,14 @@ class POMCP:
             # playing OUT OF THE TREE policy (random play)
             return self.rollout(deepcopy(state), deepcopy(history), depth)
 
-        # playing IN THE TREE policy (greedy with exploration)
-        #print(agent.tree.printTree())
-
+        # playing IN THE TREE policy (tree policy)
         a = node.tree_policy()
         # playing this move will lead you to new state s2 + reward r + observation o
-        self.simulator.set_state(deepcopy(state))       # deepcopy otherwise belief state update issue
+        self.simulator.set_state(deepcopy(state))
         next_ob, rw, done, info = self.simulator.step(a)
         history.append(a)
         history.append(next_ob)
         R = rw + self.gamma * self.simulate(info['state'], history, depth+1)
-
 
         # update the nodes counters ....
         node.add_to_belief_state(deepcopy(state))
@@ -144,14 +141,14 @@ class POMCP:
 
         # otherwise keep playing randomly
         self.simulator.set_state(state)
-        #print(self.simulator.get_possible_actions())
         a = np.random.choice(self.simulator.get_possible_actions())
-        #print(a)
+
         # playing this move will lead you to new state s2 + reward r + observation o
         next_ob, rw, done, info = self.simulator.step(a)
         return rw + self.gamma * self.rollout(info['state'], history, depth + 1)
 
 
+# test game (see RockGame.py for the experiment)
 if __name__ == '__main__':
     history = pkg.History()
 
@@ -174,7 +171,6 @@ if __name__ == '__main__':
         print("History so far : ", hist)
         #print("Game state = ", env._encode_state(env.state))
         action = agent.search(hist)
-
 
         ###############################################
         # in order to play your self
