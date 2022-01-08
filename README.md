@@ -1,4 +1,4 @@
-# pomdp
+# POMCP
 
  This repository contains the work of the group 10 for the final project of Learning Dynamics.
 It is a tentative of replication of the paper Silver, D., & Veness, J. (2010). Monte-Carlo planning in large POMDPs. Neural Information Processing Systems.
