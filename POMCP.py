@@ -4,7 +4,6 @@ from copy import deepcopy
 import gym_pomdp.envs.rock as pkg
 
 # Skeleton code
-from Tree import Tree
 from Tree2 import Tree2
 
 
